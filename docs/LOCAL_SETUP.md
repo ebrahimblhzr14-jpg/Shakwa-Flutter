@@ -1,105 +1,108 @@
 # Shakwa Flutter — Local Developer Setup Guide
 
-## 1. Prerequisites and Required Tools
+## 1. Primary Development Tools & Prerequisites
 
-* **Flutter SDK:** Version 3.32.x (compatible with Dart 3.8.x)
-* **Dart SDK:** Version 3.8.x (bundled with Flutter)
-* **Java Development Kit (JDK):** JDK 17 (recommended for Android Gradle Plugin 8.x)
+* **Primary Editor:** Visual Studio Code (VS Code) with:
+  * **Flutter** extension (by Dart Code)
+  * **Dart** extension (by Dart Code)
+* **Mobile Emulator:** Android Emulator (run from an existing Android SDK installation or managed via Android Studio's Virtual Device Manager).
+* **Flutter SDK:** Version 3.32.x (bundled with Dart 3.8.x).
 * **Android SDK:**
   * Android SDK Build-Tools 34.0.0+ / 35.0.0
-  * Android NDK (version 27.0.12077973 recommended by modern plugins)
-  * Target SDK: Android 34 / 35
-  * Minimum SDK: Android 21 (Android 5.0 Lollipop)
-* **IDE / Editor:**
-  * Visual Studio Code (with Flutter and Dart extensions), OR
-  * Android Studio (with Flutter plugin)
+  * Android NDK (version 27.0.12077973)
+  * Android Platform API 34 or 35
+  * Minimum Supported Android version: API 21 (Android 5.0 Lollipop)
+* **Java Development Kit (JDK):** JDK 17 (recommended for Android Gradle Plugin 8.x).
 
 ---
 
-## 2. Project Structure Overview
+## 2. Downloading the Repository
+
+Anyone can obtain the Flutter source code directly from GitHub without an account:
+1. Navigate to: `https://github.com/ebrahimblhzr14-jpg/Shakwa-Flutter`
+2. Click the green **Code** button and select **Download ZIP**.
+3. Extract the downloaded ZIP archive to a local folder (e.g., `C:\Projects\Shakwa-Flutter`).
+
+Alternatively, clone via Git:
+```powershell
+git clone https://github.com/ebrahimblhzr14-jpg/Shakwa-Flutter.git
+```
+
+---
+
+## 3. Project Structure
 
 ```
-Frontend/
-├── android/            # Android host project & Gradle configuration
-│   └── app/src/main/   # AndroidManifest & Network Security Configuration
-├── assets/             # Images, icons, and SVG illustrations
+Shakwa-Flutter/
+├── android/            # Android Gradle project & network security configuration
+├── assets/             # Branding icons, images, and SVG illustrations
 ├── docs/
 │   └── LOCAL_SETUP.md  # Developer setup guide
 ├── lib/
-│   ├── app/            # App entry, router & dependency injection
-│   ├── core/           # Core networking (Dio), theme, storage, and config
-│   └── features/       # Feature modules (Citizen, Employee, SuperAdmin, Auth)
-├── test/               # Unit, repository, and widget tests
+│   ├── app/            # Application entry (main.dart), routing, and theme
+│   ├── core/           # Network client (Dio), error mappers, storage, and security
+│   └── features/       # Clean Architecture features:
+│       ├── authentication/ # Login, registration, JWT TokenManager
+│       ├── complaints/     # Citizen complaint tracking, submission, comments
+│       ├── admin/          # Employee complaint processing & assignment
+│       └── super_admin/    # SuperAdmin analytics, user & department management
+├── test/               # Unit, BLoC, repository, and widget tests (194 tests)
 ├── pubspec.yaml        # Package dependencies declaration
-└── pubspec.lock        # Locked dependency graph
+└── pubspec.lock        # Locked dependency versions
 ```
 
 ---
 
-## 3. Opening the Project and Restoring Packages
+## 4. Opening in Visual Studio Code & Restoring Dependencies
 
-### In VS Code:
-1. Open VS Code.
-2. Select **File > Open Folder...** and choose `Frontend`.
-3. Open a terminal (`Ctrl+\``) and fetch packages:
+1. Launch **Visual Studio Code**.
+2. Select **File > Open Folder...** and choose the `Shakwa-Flutter` root directory.
+3. Open an integrated terminal in VS Code (**Terminal > New Terminal** or press **Ctrl+\`**).
+4. Restore Flutter package dependencies:
    ```powershell
    flutter pub get
    ```
 
-### In Android Studio:
-1. Open Android Studio.
-2. Select **Open** and select the `Frontend` directory.
-3. Android Studio will automatically prompt to run `flutter pub get`. Alternatively, click **Pub get** in the top action banner or run `flutter pub get` in the terminal.
-
 ---
 
-## 4. API Base URL Configuration
+## 5. Starting the Android Emulator & Running the App
 
-The Shakwa Flutter client connects to the ASP.NET Core backend. Configuration is controlled through `AppConfig` via compile-time `--dart-define` parameters:
+### Step 1: Start the Android Emulator
+* **From VS Code:** Click on the device selector in the bottom right corner of the VS Code status bar (or press **Ctrl+Shift+P** and type `Flutter: Select Device`), then select your installed Android Emulator to launch it.
+* **From Command Line:**
+  ```powershell
+  flutter emulators --launch <emulator_id>
+  ```
+  *(Or launch an AVD directly via Android Studio's Virtual Device Manager).*
 
-### A. Android Emulator (Default)
-When debugging on an Android Emulator, the emulator loopback address `10.0.2.2` maps directly to `localhost` on the host PC:
+### Step 2: Configure the API Base URL for Android Emulator
+The Shakwa client connects to the ASP.NET Core backend API. In Android emulators, `10.0.2.2` represents the host PC's `localhost`:
+* **Default behavior:** Running `flutter run` automatically defaults to `http://10.0.2.2:5000/api`.
+* **Explicit command:**
+  ```powershell
+  flutter run --dart-define=API_URL=http://10.0.2.2:5000/api
+  ```
+
+### Step 3: Run the Application
+In VS Code, press **F5** (or open the **Run and Debug** view and click **Start Debugging**). Alternatively, execute:
 ```powershell
 flutter run
 ```
-*(Defaults automatically to `http://10.0.2.2:5000/api`)*.
-
-### B. Physical Android Device (LAN Connection)
-When testing on a physical phone:
-1. Ensure your phone and development PC are connected to the same Wi-Fi / local network.
-2. Find your PC's local IP address (`ipconfig` in PowerShell, e.g. `192.168.1.50`).
-3. Launch with `--dart-define`:
-```powershell
-flutter run --dart-define=API_URL=http://192.168.1.50:5000/api
-```
-*(Or specify `--dart-define=LAN_IP=192.168.1.50`)*.
-
-### C. Production / Staging Environment
-Production builds require secure HTTPS endpoints:
-```powershell
-flutter build apk --release --dart-define=API_ENV=production --dart-define=API_URL=https://api.shakwa.sa/api
-```
-*Note: In production mode (`API_ENV=production`), `AppConfig` enforces HTTPS and rejects unencrypted HTTP URLs.*
 
 ---
 
-## 5. Network Security & SSL Validation
+## 6. Testing & Release Verification
 
-* **Android Network Security:** Cleartext HTTP traffic is strictly disallowed globally in release builds by `network_security_config.xml`. Only local emulator/loopback addresses (`10.0.2.2`, `127.0.0.1`, `localhost`) have cleartext exceptions for local testing.
-* **Release SSL Certificate Validation:** Standard system CA certificate verification is strictly enforced in release mode.
-
----
-
-## 6. Running Tests and Building Release Artifacts
-
-### Run Automated Tests:
+### Run Automated Quality Tests:
+In the integrated terminal:
 ```powershell
 flutter test
 ```
+*(All 194 tests will execute: unit, error mapping, upload, token concurrency, BLoC, and widget tests)*.
 
-### Build Internal Test Release APK:
+### Build Android Release APK:
 ```powershell
 flutter build apk --release
 ```
-The output APK will be generated at:
+The output APK will be placed at:
 `build/app/outputs/flutter-apk/app-release.apk`
